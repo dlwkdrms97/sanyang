@@ -459,6 +459,21 @@
         </div>
     </div>
 
+    <!-- Weather Detail Modal -->
+    <div id="weather-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>16일간의 상세 날씨</h2>
+                <button class="icon-btn" onclick="closeWeatherModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="scroll-area" id="modal-weather-list" style="max-height: 500px;">
+                <!-- Full weather will be here -->
+            </div>
+        </div>
+    </div>
+
     <!-- Info Modal -->
     <div id="info-modal" class="modal">
         <div class="modal-content">
@@ -549,7 +564,7 @@
                 const [mealRes, ttRes, weatherRes, scheduleRes] = await Promise.all([
                     fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${rawDate}`),
                     fetch(`https://open.neis.go.kr/hub/misTimetable?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&ALL_TI_YMD=${rawDate}`),
-                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul`),
+                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=16&timezone=Asia%2FSeoul`),
                     fetch(`https://open.neis.go.kr/hub/SchoolSchedule?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&AA_FROM_YMD=${monthRange.from}&AA_TO_YMD=${monthRange.to}`)
                 ]);
                 const mealDataJson = await mealRes.json(), ttDataJson = await ttRes.json(), weatherJson = await weatherRes.json(), scheduleJson = await scheduleRes.json();
@@ -622,7 +637,7 @@
                     headerTitle = '주간 날씨';
                     if (weatherData) {
                         let rows = ''; for(let i=0; i<7; i++) rows += `<div class="w-row"><span class="w-day">${i===0?'오늘':['일','월','화','수','목','금','토'][new Date(weatherData.time[i]).getDay()]}</span><span class="w-ico">${getWeatherIcon(weatherData.weathercode[i])}</span><span class="w-temp"><span class="w-min">${Math.round(weatherData.temperature_2m_min[i])}°</span><span class="w-max">${Math.round(weatherData.temperature_2m_max[i])}°</span></span></div>`;
-                        contentHtml = `<div class="scroll-area">${rows}</div>`;
+                        contentHtml = `<div class="scroll-area">${rows}</div><button class="detail-btn" onclick="openWeatherModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>자세히 보기</button>`;
                     }
                 } else if (type === 'schedule') {
                     headerTitle = '이달의 학사일정';
@@ -684,6 +699,21 @@
         function closeBoardModal() { document.getElementById('board-modal').style.display = 'none'; }
         function refreshBoardModal() { const list = document.getElementById('modal-board-list'); if (list) list.innerHTML = getBoardPostsHtml(); }
 
+        function openWeatherModal() {
+            const list = document.getElementById('modal-weather-list');
+            if (list && weatherData) {
+                let rows = '';
+                for(let i=0; i<weatherData.time.length; i++) {
+                    const date = new Date(weatherData.time[i]);
+                    const dateStr = `${date.getMonth()+1}/${date.getDate()}(${['일','월','화','수','목','금','토'][date.getDay()]})`;
+                    rows += `<div class="w-row" style="padding:15px 0;"><span class="w-day" style="width:80px;">${dateStr}</span><span class="w-ico" style="font-size:24px;">${getWeatherIcon(weatherData.weathercode[i])}</span><span class="w-temp" style="width:100px;"><span class="w-min">${Math.round(weatherData.temperature_2m_min[i])}°</span> / <span class="w-max" style="color:#ef4444;">${Math.round(weatherData.temperature_2m_max[i])}°</span></span></div>`;
+                }
+                list.innerHTML = rows;
+            }
+            document.getElementById('weather-modal').style.display = 'flex';
+        }
+        function closeWeatherModal() { document.getElementById('weather-modal').style.display = 'none'; }
+
         function editActivityGlobal() {
             if (prompt('관리자 비밀번호를 입력하세요.') === '1010') {
                 const rawDate = formatDateToRaw(selectedDate), newVal = prompt('오늘의 전체 창체 활동 내용을 입력하세요.', customAct[rawDate] || '');
@@ -699,7 +729,7 @@
             document.getElementById('admin-date-display').innerText = formatDateToDisplay(selectedDate);
             const inputContainer = document.getElementById('admin-inputs'); inputContainer.innerHTML = '';
             let ttData = customTT[customKey] || [];
-            if (!customTT[customKey]) allTimetableData.filter(i => String(i.GRADE) === String(g) && String(i.CLASS_NM) === String(c)).forEach(i => ttData[i.PERIO-1] = i.ITRT_CNTNT);
+            if (!customTT[customKey]) allTimetableData.filter(i => String(i.GRADE) === String(g) && String(i.CLASS_NM) === String(c)).forEach(i => ttData[i-1] = i.ITRT_CNTNT);
             for (let i = 1; i <= 7; i++) inputContainer.innerHTML += `<div class="admin-tt-input-row"><span class="admin-tt-num">${i}</span><input type="text" class="admin-tt-input" id="admin-tt-i-${i}" value="${ttData[i-1] || ''}" placeholder="과목명"></div>`;
         }
         function saveAdminData() {
@@ -714,7 +744,7 @@
         function closeAdminModal() { adminModal.style.display = 'none'; }
         function closeInfoModal() { document.getElementById('info-modal').style.display = 'none'; }
         document.getElementById('info-btn').onclick = () => document.getElementById('info-modal').style.display = 'flex';
-        window.onclick = (e) => { if (e.target === adminModal) closeAdminModal(); if (e.target === document.getElementById('info-modal')) closeInfoModal(); if (e.target === document.getElementById('board-modal')) closeBoardModal(); }
+        window.onclick = (e) => { if (e.target === adminModal) closeAdminModal(); if (e.target === document.getElementById('info-modal')) closeInfoModal(); if (e.target === document.getElementById('board-modal')) closeBoardModal(); if (e.target === document.getElementById('weather-modal')) closeWeatherModal(); }
         
         const themeToggle = document.getElementById('theme-toggle');
         function setTheme(theme) { document.documentElement.setAttribute('data-theme', theme); themeToggle.innerHTML = THEME_ICONS[theme]; localStorage.setItem('sanyang-theme', theme); currentTheme = theme; }

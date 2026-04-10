@@ -1,0 +1,21 @@
+{
+  "name": "산양알리미",
+  "short_name": "산양알리미",
+  "description": "산양중학교 스마트 학교 대시보드",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

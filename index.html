@@ -64,21 +64,34 @@
             padding: 10px 0;
         }
 
-        .logo-group h1 {
-            font-size: 28px;
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-group img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+        }
+
+        .logo-group .text-box h1 {
+            font-size: 26px;
             font-weight: 800;
             margin: 0;
             background: linear-gradient(135deg, var(--primary), #a855f7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -1px;
+            line-height: 1.2;
         }
 
-        .logo-group p {
+        .logo-group .text-box p {
             color: var(--text-sub);
-            margin: 4px 0 0 0;
-            font-weight: 500;
-            font-size: 14px;
+            margin: 0;
+            font-weight: 600;
+            font-size: 13px;
         }
 
         .glass-controls {
@@ -375,8 +388,11 @@
     <div class="app-wrapper">
         <header>
             <div class="logo-group">
-                <h1>Sanyang Alimi</h1>
-                <p id="today-date"></p>
+                <img src="logo.png" alt="산양알리미 로고">
+                <div class="text-box">
+                    <h1>산양알리미</h1>
+                    <p id="today-date"></p>
+                </div>
             </div>
             <div class="glass-controls">
                 <input type="date" id="date-picker">

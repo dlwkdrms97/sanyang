@@ -667,12 +667,12 @@
                     const validEvents = scheduleData.filter(i => i.EVENT_NM !== '토요휴업일');
                     contentHtml = `<div class="scroll-area">${validEvents.map(i => `<div class="s-row"><div class="s-date">${i.AA_YMD.substring(4,6)}/${i.AA_YMD.substring(6,8)}</div><div class="s-event">${i.EVENT_NM}</div></div>`).join('') || '<p style="color:var(--text-sub)">행사 없음</p>'}</div>`;
                 } else if (type === 'board') {
-                    headerTitle = '익명 게시판';
+                    headerTitle = '질문 게시판';
                     contentHtml = `
                         <div class="board-input-group">
                             <input type="text" id="board-nick" class="board-input" placeholder="닉네임" maxlength="8">
-                            <input type="text" id="board-text" class="board-input" placeholder="함께 나누고 싶은 이야기..." maxlength="50">
-                            <button class="board-submit" onclick="addPost()">등록하기</button>
+                            <input type="text" id="board-text" class="board-input" placeholder="선배님, 궁금한 게 있어요!" maxlength="50">
+                            <button class="board-submit" onclick="addPost()">질문하기</button>
                         </div>
                         <div class="scroll-area" id="board-list">
                             ${getBoardPostsHtml()}
@@ -686,13 +686,42 @@
         }
 
         function getBoardPostsHtml() {
-            return boardPosts.map(p => `
+            return boardPosts.map(p => {
+                const replies = p.replies ? Object.keys(p.replies).map(k => p.replies[k]) : [];
+                return `
                 <div class="post-item">
                     <div class="post-header"><span class="post-nick">${p.nick}</span><span class="post-time">${p.time}</span></div>
                     <div class="post-text">${p.text}</div>
+                    
+                    <div class="reply-section">
+                        ${replies.map(r => `
+                            <div class="reply-item">
+                                <span class="reply-nick">${r.nick}:</span>
+                                <span class="reply-text">${r.text}</span>
+                            </div>
+                        `).join('')}
+                        <div class="reply-input-group">
+                            <input type="text" id="reply-nick-${p.id}" class="reply-input" placeholder="답변자 닉네임" style="width:80px;">
+                            <input type="text" id="reply-text-${p.id}" class="reply-input" placeholder="따뜻한 답변을 달아주세요!">
+                            <button class="reply-submit" onclick="addReply('${p.id}')">답변</button>
+                        </div>
+                    </div>
+
                     <div class="post-delete-btn" onclick="deletePost('${p.id}')" title="삭제"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div>
                 </div>
-            `).reverse().join('') || '<p style="color:var(--text-sub); text-align:center; padding:20px;">첫 번째 메시지를 남겨보세요!</p>';
+            `}).reverse().join('') || '<p style="color:var(--text-sub); text-align:center; padding:20px;">첫 번째 질문을 남겨보세요!</p>';
+        }
+
+        function addReply(postId) {
+            const nick = document.getElementById(`reply-nick-${postId}`).value.trim() || '선배님',
+                  text = document.getElementById(`reply-text-${postId}`).value.trim();
+            if (!text) return alert('답변 내용을 입력해주세요!');
+            
+            db.ref(`posts/${postId}/replies`).push({
+                nick, text, timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            document.getElementById(`reply-text-${postId}`).value = '';
         }
 
         function deletePost(id) {
